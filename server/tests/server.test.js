@@ -3,6 +3,7 @@ const request = require('supertest');
 const {ObjectID} = require('mongodb');
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const _ = require('lodash');
 
 const todos = [
     {
@@ -11,7 +12,9 @@ const todos = [
     },
     {
         _id: new ObjectID(),
-        text: "Second Test Todo"
+        text: "Second Test Todo",
+        "completed": true,
+        "completedAt": 333
     }
 ]
 
@@ -123,7 +126,7 @@ describe('DELETE /todos/:id', () => {
                 if(err) {
                     return done(err);
                 }
-
+                done();
                 // Todo.findById(hexId).then((todo) => {
                 //     expect(todo).toNotExist();
                 //     done();
@@ -150,4 +153,44 @@ describe('DELETE /todos/:id', () => {
             .end(done);
     });
 
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', (done) => {
+        let id = todos[0]._id.toHexString();
+        var text = "This should be the new text";
+        
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({
+                completed: true,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+                expect(res.body.todo.completed).toBe(true);
+                // expect(res.body.todo.completedAt).toBeA('number');
+            })
+            .end(done);
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        let id = todos[1]._id.toHexString();
+        var text = "This should be the new text!!";
+        
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({
+                completed: false,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+                expect(res.body.todo.completed).toBe(false);
+                // expect(res.body.todo.completedAt).toBeA('number');
+            })
+            .end(done);
+    });
 });
